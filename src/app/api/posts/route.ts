@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
 
   const posts = await prisma.post.findMany({
     where,
-    orderBy: { createdAt: "desc" },
     include: {
       user: { select: { id: true, displayName: true } },
       segments: {
@@ -35,6 +34,13 @@ export async function GET(req: NextRequest) {
       },
     },
   });
+
+  posts.sort((a, b) => {
+    const aStart = a.segments[0]?.startTime ?? Infinity;
+    const bStart = b.segments[0]?.startTime ?? Infinity;
+    return aStart - bStart;
+  });
+
   return NextResponse.json(posts);
 }
 
