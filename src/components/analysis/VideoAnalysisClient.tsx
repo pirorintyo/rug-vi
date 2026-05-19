@@ -20,6 +20,8 @@ export function VideoAnalysisClient({ video, currentUserId }: Props) {
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [previewSegments, setPreviewSegments] = useState<{ startTime: number; endTime: number }[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlayerPaused, setIsPlayerPaused] = useState(false);
 
   const ytId = extractYoutubeId(video.youtubeUrl);
 
@@ -33,6 +35,87 @@ export function VideoAnalysisClient({ video, currentUserId }: Props) {
     return <p className="text-center py-10 text-red-500">無効なYouTube URLです</p>;
   }
 
+  // ---- Fullscreen mode ----
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex">
+        {/* Video area */}
+        <div className={`relative flex flex-col transition-all duration-300 ${isPlayerPaused ? "w-full lg:w-3/5" : "w-full"}`}>
+          {/* Top bar */}
+          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-2 bg-gradient-to-b from-black/70 to-transparent">
+            <span className="text-white text-sm font-medium truncate max-w-xs">{video.title}</span>
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="text-white text-sm px-3 py-1 rounded bg-white/20 hover:bg-white/30"
+            >
+              ✕ 全画面を閉じる
+            </button>
+          </div>
+
+          {/* Player */}
+          <div className="flex-1 flex items-center">
+            <div className="w-full aspect-video">
+              <YouTubePlayer
+                ref={playerRef}
+                videoId={ytId}
+                onReady={(d) => setDuration(d)}
+                onPausedChange={setIsPlayerPaused}
+              />
+            </div>
+          </div>
+
+          {/* Timeline */}
+          {duration > 0 && (
+            <div className="px-4 pb-4">
+              <SegmentTimeline
+                duration={duration}
+                segments={previewSegments}
+                onSeek={(t) => playerRef.current?.seekTo(t)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* PostForm panel — slides in when paused */}
+        <div
+          className={`flex-col bg-white overflow-y-auto transition-all duration-300 ${
+            isPlayerPaused ? "flex w-full lg:w-2/5" : "hidden w-0"
+          }`}
+        >
+          <div className="p-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-sm">新しい分析投稿</h2>
+            <button
+              onClick={() => setIsPanelOpen((o) => !o)}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              投稿一覧を見る
+            </button>
+          </div>
+          <div className="p-4">
+            <PostForm
+              videoId={video.id}
+              playerRef={playerRef}
+              editingPost={editingPost}
+              onSubmitted={() => { handleSubmitted(); setIsFullscreen(false); }}
+              onCancelEdit={() => { setEditingPost(null); setPreviewSegments([]); }}
+              onSegmentsChange={setPreviewSegments}
+            />
+          </div>
+        </div>
+
+        {/* Pause hint overlay — shown briefly when not paused */}
+        {!isPlayerPaused && (
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 pointer-events-none">
+            <span className="bg-black/50 text-white text-xs px-3 py-1 rounded-full">
+              一時停止すると投稿フォームが開きます
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ---- Normal mode ----
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -51,12 +134,21 @@ export function VideoAnalysisClient({ video, currentUserId }: Props) {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: player + form */}
         <div className={`flex flex-col overflow-y-auto p-4 gap-4 transition-all duration-200 ${isPanelOpen ? "w-full lg:w-3/5" : "w-full max-w-3xl mx-auto"}`}>
-          {/* YouTube player */}
-          <YouTubePlayer
-            ref={playerRef}
-            videoId={ytId}
-            onReady={(d) => setDuration(d)}
-          />
+          {/* YouTube player with fullscreen button */}
+          <div className="relative group">
+            <YouTubePlayer
+              ref={playerRef}
+              videoId={ytId}
+              onReady={(d) => setDuration(d)}
+              onPausedChange={setIsPlayerPaused}
+            />
+            <button
+              onClick={() => setIsFullscreen(true)}
+              className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              ⛶ 全画面
+            </button>
+          </div>
 
           {/* Custom timeline */}
           <SegmentTimeline

@@ -10,6 +10,7 @@ export interface YouTubePlayerHandle {
 interface Props {
   videoId: string;
   onReady?: (duration: number) => void;
+  onPausedChange?: (paused: boolean) => void;
 }
 
 declare global {
@@ -21,11 +22,13 @@ declare global {
 }
 
 export const YouTubePlayer = forwardRef<YouTubePlayerHandle, Props>(
-  ({ videoId, onReady }, ref) => {
+  ({ videoId, onReady, onPausedChange }, ref) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const playerRef = useRef<any>(null);
     const onReadyRef = useRef(onReady);
+    const onPausedChangeRef = useRef(onPausedChange);
     onReadyRef.current = onReady;
+    onPausedChangeRef.current = onPausedChange;
 
     const playerId = `yt-player-${videoId}`;
 
@@ -51,22 +54,25 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, Props>(
             onReady: (e: any) => {
               onReadyRef.current?.(e.target.getDuration());
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onStateChange: (e: any) => {
+              // YT.PlayerState: PLAYING=1, PAUSED=2, ENDED=0
+              if (e.data === 1) onPausedChangeRef.current?.(false);
+              if (e.data === 2 || e.data === 0) onPausedChangeRef.current?.(true);
+            },
           },
         });
       };
 
       if (window.YT && window.YT.Player) {
-        // API already loaded
         createPlayer();
       } else {
-        // Queue callback (may already be queued by another instance)
         const prev = window.onYouTubeIframeAPIReady;
         window.onYouTubeIframeAPIReady = () => {
           prev?.();
           createPlayer();
         };
 
-        // Inject script only once
         if (!document.getElementById("yt-api-script")) {
           const script = document.createElement("script");
           script.id = "yt-api-script";
