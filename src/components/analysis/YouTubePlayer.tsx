@@ -48,7 +48,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, Props>(
           videoId,
           width: "100%",
           height: "100%",
-          playerVars: { rel: 0, modestbranding: 1 },
+          playerVars: { rel: 0, modestbranding: 1, fs: 0 },
           events: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onReady: (e: any) => {
