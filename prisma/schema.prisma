@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  displayName  String
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+
+  videos Video[]
+  posts  Post[]
+}
+
+model Video {
+  id             String   @id @default(cuid())
+  youtubeUrl     String
+  title          String
+  postedAt       DateTime
+  registeredById String
+  createdAt      DateTime @default(now())
+
+  registeredBy User   @relation(fields: [registeredById], references: [id])
+  posts        Post[]
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  video    Video     @relation(fields: [videoId], references: [id])
+  segments Segment[]
+}
+
+model Segment {
+  id        String   @id @default(cuid())
+  postId    String
+  startTime Float
+  endTime   Float
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comments Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  segmentId String
+  body      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  segment Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+}
