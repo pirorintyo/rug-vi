@@ -82,14 +82,8 @@ export function VideoAnalysisClient({ video, currentUserId }: Props) {
             isPlayerPaused ? "flex w-full lg:w-2/5" : "hidden w-0"
           }`}
         >
-          <div className="p-4 border-b flex items-center justify-between">
+          <div className="p-4 border-b">
             <h2 className="font-semibold text-sm">新しい分析投稿</h2>
-            <button
-              onClick={() => setIsPanelOpen((o) => !o)}
-              className="text-xs text-blue-600 hover:underline"
-            >
-              投稿一覧を見る
-            </button>
           </div>
           <div className="p-4">
             <PostForm
