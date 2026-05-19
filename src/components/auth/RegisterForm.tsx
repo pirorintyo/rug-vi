@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 interface FormValues {
   email: string;
@@ -23,12 +24,23 @@ export function RegisterForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    setLoading(false);
     if (!res.ok) {
+      setLoading(false);
       const json = await res.json();
       setError(json.error || "登録に失敗しました");
+      return;
+    }
+    const result = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+    setLoading(false);
+    if (result?.error) {
+      setError("登録は完了しましたが、ログインに失敗しました。ログイン画面からお試しください。");
+      router.push("/login");
     } else {
-      router.push("/login?registered=1");
+      router.push("/videos");
     }
   };
 
