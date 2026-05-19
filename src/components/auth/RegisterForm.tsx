@@ -50,6 +50,7 @@ export function RegisterForm() {
         <label className="block text-sm font-medium mb-1">メールアドレス</label>
         <input
           type="email"
+          placeholder="例: s71988@nda.ac.jp"
           {...register("email", { required: true })}
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -59,6 +60,7 @@ export function RegisterForm() {
         <label className="block text-sm font-medium mb-1">表示名</label>
         <input
           type="text"
+          placeholder="例: 渡邊博紀"
           {...register("displayName", { required: true })}
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
